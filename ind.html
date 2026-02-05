@@ -2,57 +2,539 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>获取文本示例</title>
-</head>
-<body>
-    <!-- 你的页面其他内容 -->
-    <h1>这是页面主要内容</h1>
-    <p>页面加载后，下方会通过接口获取并添加一段文本。</p>
-
-    <script>
-        // 定义一个异步函数来获取文本
-        async function fetchTextAndAppend() {
-            const apiUrl = 'https://api.lolimi.cn/API/shangg/api?type=text';
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .main-content {
+            padding: 30px 25px;
+            position: relative;
+        }
+        
+        .intro-text {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        .intro-text p {
+            margin-bottom: 1.2em;
+        }
+        
+        .intro-text p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .api-section {
+            margin-top: 40px;
+        }
+        
+        .api-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .api-header h2 {
+            font-size: 1.4rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .api-header h2 i {
+            color: #667eea;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .refresh-btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .api-result {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 15px;
+            border: 1px solid #eaeaea;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .api-result.error {
+            background: #fff5f5;
+            border-color: #fed7d7;
+            border-left: 4px solid #fc8181;
+        }
+        
+        .api-result.success {
+            background: #f0fff4;
+            border-color: #c6f6d5;
+            border-left: 4px solid #68d391;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            color: #38a169;
+        }
+        
+        .status.error {
+            color: #e53e3e;
+        }
+        
+        .status.loading {
+            color: #667eea;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e0;
+        }
+        
+        .status-dot.success {
+            background: #68d391;
+            box-shadow: 0 0 0 3px rgba(104, 211, 145, 0.2);
+        }
+        
+        .status-dot.error {
+            background: #fc8181;
+            box-shadow: 0 0 0 3px rgba(252, 129, 129, 0.2);
+        }
+        
+        .status-dot.loading {
+            background: #667eea;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .time {
+            color: #718096;
+            font-size: 0.85rem;
+        }
+        
+        .result-content {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #2d3748;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .result-content.error {
+            color: #c53030;
+        }
+        
+        .api-url {
+            background: #edf2f7;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            word-break: break-all;
+            color: #4a5568;
+            border-left: 3px solid #a0aec0;
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
             
-            try {
-                // 1. 发起网络请求
-                const response = await fetch(apiUrl);
-                
-                // 2. 检查请求是否成功 (状态码为200-299)
-                if (!response.ok) {
-                    throw new Error(`网络请求失败，状态码: ${response.status}`);
-                }
-                
-                // 3. 获取响应的纯文本
-                const resultText = await response.text();
-                
-                // 4. 创建一个新的元素来放置文本
-                const newDiv = document.createElement('div');
-                newDiv.id = 'api-result'; // 可以添加一个ID方便后续查找
-                newDiv.textContent = resultText; // 设置文本内容
-                
-                // 5. 添加一些样式（可选，使其在移动端显示更友好）
-                newDiv.style.cssText = 'margin-top: 20px; padding: 15px; border-top: 1px solid #eee; color: #666;';
-                
-                // 6. 将新元素插入到HTML文档的<body>标签最底部
-                document.body.appendChild(newDiv);
-                
-            } catch (error) {
-                // 捕获并处理请求过程中可能发生的任何错误
-                console.error('获取数据时出错:', error);
-                
-                // 即使在出错的情况下，也在页面底部显示一个友好的错误提示
-                const errorDiv = document.createElement('div');
-                errorDiv.id = 'api-error';
-                errorDiv.textContent = '抱歉，暂时无法加载内容。请稍后再试。';
-                errorDiv.style.cssText = 'margin-top: 20px; padding: 15px; background-color: #fff0f0; color: #d00;';
-                document.body.appendChild(errorDiv);
+            .container {
+                border-radius: 12px;
+            }
+            
+            header {
+                padding: 25px 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .main-content {
+                padding: 25px 20px;
+            }
+            
+            .intro-text {
+                padding: 20px;
+                font-size: 1rem;
+            }
+            
+            .api-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .refresh-btn {
+                width: 100%;
+                justify-content: center;
             }
         }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+            
+            .main-content {
+                padding: 20px 15px;
+            }
+            
+            .intro-text, .api-result {
+                padding: 18px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>获取文本示例</h1>
+            <p class="subtitle">动态加载API内容并优雅展示</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="intro-text">
+                <p>🌙 进群前的一封小信：关于这里，也关于我</p>
+                <p>亲爱的朋友：</p>
+                <p>很高兴能在这里遇到你。在开启我们的公益站之旅前，我想先隔着屏幕和你交交心，希望能让你看到一个最真实的月亮。</p>
+                <p>如果你愿意，请先看看我的故事：我并不是一个完美的站长，在过去的运行中，我因为无知犯过很多错，也让一些朋友感到过不安。</p>
+                <p>关于那些遗憾和我的道歉：我已把之前的事件道歉信放在了小红书，希望你能先花一点点时间了解它。我不想隐瞒任何过去，因为我希望每一个进群的朋友，都是在了解并愿意包容我的瑕疵后，才选择留下的。</p>
+                <p>这里是一个有温度的"朋友圈"：本群不仅仅是一个提供工具的地方，更是大家玩游戏和自由分享生活点滴的小天地。我有时会像个话痨一样 @全体成员 分享我觉得有趣的事。如果你更喜欢安静地使用工具，或者觉得我的打扰会让你困扰，那可能这里并不是最适合你的地方，你可以随时选择离开。</p>
+                <p>请原谅我可能存在的"表达笨拙"：由于我还在上学，且生活环境与大家略有不同，我不太擅长拼音打字，沟通大都靠手写。这导致我写出来的句子有时会显得很生硬、甚至有点奇怪，但这真的不是我在傲慢或耍脾气。我正在努力学习如何更好地表达，也请你给我一点点成长的耐心。</p>
+                <p>！重要提示：本群开启了进群与退群提示(显示qq号)如果你选择了进群，就代表你已经知晓并接受了以上所有情况（包括我的过去和我的沟通方式）。希望大家以后不要再听到因为这些已知问题而产生的无意义争吵</p>
+                <p>如果你看完这些，依然愿意进来坐坐，那对我来说是莫大的鼓励。</p>
+                <p>我们群里见。</p>
+            </div>
+            
+            <div class="api-section">
+                <div class="api-header">
+                    <h2><i class="fas fa-code"></i> API响应内容</h2>
+                    <button class="refresh-btn" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>刷新内容</span>
+                    </button>
+                </div>
+                
+                <div class="api-url">
+                    GET https://api.lolimi.cn/API/shangg/api?type=text
+                </div>
+                
+                <div class="api-result" id="apiResult">
+                    <div class="result-header">
+                        <div class="status loading">
+                            <span class="status-dot loading"></span>
+                            <span>正在加载API内容...</span>
+                        </div>
+                        <div class="time" id="loadTime"></div>
+                    </div>
+                    <div class="result-content" id="resultContent">
+                        请稍候，正在从服务器获取内容...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-note">
+                <p>页面会在加载时自动获取API内容，您也可以点击"刷新内容"按钮手动刷新</p>
+                <p><i class="fas fa-mobile-alt"></i> 已针对移动端优化 | <i class="fas fa-bolt"></i> 支持离线重试</p>
+            </div>
+        </div>
+    </div>
 
-        // 当页面初始的HTML文档完全加载和解析完毕后，执行我们的函数
-        document.addEventListener('DOMContentLoaded', fetchTextAndAppend);
+    <script>
+        // 定义API地址
+        const apiUrl = 'https://api.lolimi.cn/API/shangg/api?type=text';
+        
+        // 获取DOM元素
+        const refreshBtn = document.getElementById('refreshBtn');
+        const apiResult = document.getElementById('apiResult');
+        const resultContent = document.getElementById('resultContent');
+        const statusElement = apiResult.querySelector('.status');
+        const statusDot = apiResult.querySelector('.status-dot');
+        const loadTime = document.getElementById('loadTime');
+        
+        // 加载状态管理器
+        const state = {
+            isLoading: false,
+            lastLoadTime: null
+        };
+        
+        // 设置加载状态
+        function setLoading(isLoading) {
+            state.isLoading = isLoading;
+            
+            if (isLoading) {
+                refreshBtn.classList.add('loading');
+                refreshBtn.innerHTML = '<span class="loading-spinner"></span> 加载中...';
+                refreshBtn.disabled = true;
+                
+                statusElement.className = 'status loading';
+                statusDot.className = 'status-dot loading';
+                statusElement.innerHTML = '<span class="status-dot loading"></span> 正在请求API...';
+                
+                apiResult.className = 'api-result';
+            } else {
+                refreshBtn.classList.remove('loading');
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>刷新内容</span>';
+                refreshBtn.disabled = false;
+            }
+        }
+        
+        // 显示结果
+        function showResult(content, isError = false) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            loadTime.textContent = `更新时间: ${timeString}`;
+            
+            if (isError) {
+                apiResult.className = 'api-result error';
+                statusElement.className = 'status error';
+                statusDot.className = 'status-dot error';
+                statusElement.innerHTML = '<span class="status-dot error"></span> 加载失败';
+                
+                resultContent.className = 'result-content error';
+                resultContent.innerHTML = `<p><strong>错误信息:</strong> ${content}</p>
+                                         <p style="margin-top: 10px; font-size: 0.9rem;">
+                                            <i class="fas fa-info-circle"></i> 您可以点击上方按钮重试
+                                         </p>`;
+            } else {
+                apiResult.className = 'api-result success';
+                statusElement.className = 'status success';
+                statusDot.className = 'status-dot success';
+                statusElement.innerHTML = '<span class="status-dot success"></span> 加载成功';
+                
+                resultContent.className = 'result-content';
+                resultContent.textContent = content;
+                
+                state.lastLoadTime = now;
+            }
+        }
+        
+        // 获取API文本内容
+        async function fetchText() {
+            if (state.isLoading) return;
+            
+            const startTime = Date.now();
+            setLoading(true);
+            
+            try {
+                // 设置10秒超时
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                // 发起请求
+                const response = await fetch(apiUrl, {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'text/plain',
+                        'Content-Type': 'text/plain; charset=utf-8'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                const responseTime = Date.now() - startTime;
+                
+                // 检查HTTP状态
+                if (!response.ok) {
+                    throw new Error(`HTTP错误 (${response.status})`);
+                }
+                
+                // 获取响应文本
+                const resultText = await response.text();
+                
+                // 检查是否包含错误代码
+                if (resultText.includes('E001') || resultText.includes('expired')) {
+                    throw new Error(`API返回错误: ${resultText}`);
+                }
+                
+                // 显示成功结果
+                showResult(resultText);
+                console.log(`API请求成功，耗时: ${responseTime}ms`);
+                
+            } catch (error) {
+                console.error('获取数据时出错:', error);
+                
+                // 根据错误类型显示不同的错误信息
+                let errorMessage = '未知错误，请稍后重试';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = '请求超时 (10秒)，请检查网络连接';
+                } else if (error.message.includes('E001')) {
+                    errorMessage = '接口访问权限已过期 (E001)';
+                } else if (error.message.includes('HTTP错误')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = '网络连接失败，请检查网络设置';
+                }
+                
+                showResult(errorMessage, true);
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        // 事件监听器
+        refreshBtn.addEventListener('click', fetchText);
+        
+        // 页面加载时自动获取
+        document.addEventListener('DOMContentLoaded', () => {
+            // 延迟一点时间执行，确保页面完全渲染
+            setTimeout(fetchText, 300);
+        });
+        
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', (e) => {
+            // F5 或 Ctrl+R 刷新
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                fetchText();
+            }
+        });
+        
+        // 监听网络状态变化
+        window.addEventListener('online', () => {
+            if (!state.isLoading && !state.lastLoadTime) {
+                fetchText();
+            }
+        });
     </script>
 </body>
 </html>
